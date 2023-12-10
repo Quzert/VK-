@@ -26,10 +26,12 @@ menu = {
         '010':'Лапша по флотский'
     }
 
+
 try:
     os.mkdir('newimgs')
 except:
     print('1')
+
 
 def send_msg(text,id):
     '''
