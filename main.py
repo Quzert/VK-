@@ -4,7 +4,7 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from PIL import Image,ImageDraw, ImageFont
 from math import *
 from random import randint
-
+import os
 
 # Подключение бота
 vk_session = vk_api.VkApi(token="vk1.a.DuSUTm5V1Nwp9TAY6h5WRjxu4FIJCrAZaK3utrREhPRLFfNTg2Vqlgym3f-22yFdbjGxInNcUfHmLgebq_cSVhMR2Dd34ytVZCYIOOz-z8vFmUp0ZktDrfgAxW2nHTpdDd7gktWiKben-0_5tXfoJEFy1EleOqM_xQvOJL5C0K3hm-890volf05eK74mc85rwnaGM1Mv2cfUGsiuPua0Dg")
@@ -26,18 +26,25 @@ menu = {
         '010':'Лапша по флотский'
     }
 
+try:
+    os.mkdir('newimgs')
+except:
+    print('1')
+
 def send_msg(text,id):
     '''
     Отправка сообщений с текстом text пользователю id
     '''
     vk_session.method("messages.send", {"user_id":id, "message":text, "random_id":0})
 
+
 def send_img(img,id):
     att = []
     upload_img = upload.photo_messages(photos=img)[0]
     att.append('photo{}_{}'.format(upload_img['owner_id'],upload_img['id']))
     vk_session.method("messages.send", {"user_id":id, "random_id":0, 'attachment': ','.join(att)})
-
+    os.remove(img)
+    
 
 def get_menu(id):
     '''
@@ -47,10 +54,6 @@ def get_menu(id):
     for i in range(len(menu)):
         ret = ret + str(i+1) + ") " + str(menu[i]) + '\n'
     send_msg(ret,id)
-
-
-
-    pass
 
 
 def add_bask(id,val):
@@ -108,10 +111,8 @@ def gen_bask_img(bask,id):
         else :
             count_it = count_imgs
 
-
         for i in range(count_it):
             imgs.append(Image.open(('img/dish' + str(bask[i + 4 * it][0]) + '.jpg')))
-
             
         new_img = Image.new('RGB', (800,800), (250,250,250))
 
@@ -136,6 +137,7 @@ def check_bask(id):
             send_img(img[i],id)
     except:
         send_msg('Ваша корзина пуста.',id)
+
 
 # Обработка ивентов
 for event in longpoll.listen():
@@ -162,7 +164,6 @@ for event in longpoll.listen():
                 send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
             elif msg == 'посмотреть корзину':
                 check_bask(id)
-
                 
             else:
                 if msg.split()[0] == 'заказ':
@@ -171,7 +172,3 @@ for event in longpoll.listen():
                 elif msg.split()[0] == 'позиция':
                     add_bask(id, msg)
                     print(users)
-
-
-
-            
