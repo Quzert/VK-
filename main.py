@@ -1,6 +1,6 @@
 import vk_api 
-from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api import VkUpload
 from PIL import Image,ImageDraw, ImageFont
 from math import *
 from random import randint
