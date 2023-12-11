@@ -6,33 +6,37 @@ from math import *
 from random import randint
 import os
 
+
 # Подключение бота
 vk_session = vk_api.VkApi(token="vk1.a.DuSUTm5V1Nwp9TAY6h5WRjxu4FIJCrAZaK3utrREhPRLFfNTg2Vqlgym3f-22yFdbjGxInNcUfHmLgebq_cSVhMR2Dd34ytVZCYIOOz-z8vFmUp0ZktDrfgAxW2nHTpdDd7gktWiKben-0_5tXfoJEFy1EleOqM_xQvOJL5C0K3hm-890volf05eK74mc85rwnaGM1Mv2cfUGsiuPua0Dg")
 session_api = vk_session.get_api()
 longpoll = VkLongPoll(vk_session)
 upload = VkUpload(vk_session)
+
+# Данные
 users = {} #ключ:значение
 orders = [] #id, имя, номер телефона, адрес, корзина
 menu = {
-        '001':'Рыба',
-        '002':'Катлета',
-        '003':'Пюре',
-        '004':'Лапша по флотский',
-        '005':'Лапша по флотский',
-        '006':'Лапша по флотский',
-        '007':'Лапша по флотский',
-        '008':'Лапша по флотский',
-        '009':'Лапша по флотский',
-        '010':'Лапша по флотский'
+        '001':['Солянка',229],
+        '002':['Салат Сельдь под шубой',189],
+        '003':['Салат Цезарь с цыпленком',249],
+        '004':['Салат Оливье с курицей',219],
+        '005':['Крафт Бургер курица',439],
+        '006':['Шашлый из свинины',549],
+        '007':['Рубленый стейк',549],
+        '008':['Мохто',139],
+        '009':['Морс клюквенный',159],
+        '010':['Какао',359]
     }
 
-
+# Создание необходимых директорий
 try:
     os.mkdir('newimgs')
 except:
     print('1')
 
 
+# Функции
 def send_msg(text,id):
     '''
     Отправка сообщений с текстом text пользователю id
@@ -40,22 +44,32 @@ def send_msg(text,id):
     vk_session.method("messages.send", {"user_id":id, "message":text, "random_id":0})
 
 
-def send_img(img,id):
+def send_img(img,id,d = True):
+    '''
+    Отправка изображения расположенному по пути img, пользователю
+    '''
     att = []
     upload_img = upload.photo_messages(photos=img)[0]
     att.append('photo{}_{}'.format(upload_img['owner_id'],upload_img['id']))
     vk_session.method("messages.send", {"user_id":id, "random_id":0, 'attachment': ','.join(att)})
-    os.remove(img)
+    if d:
+        os.remove(img)
     
 
 def get_menu(id):
     '''
     Отправляет меню пользователю id
     '''
-    ret = 'Чтобы добавить в корзину напиште ПОЗИЦИЯ и номер блюда. \nПример ПОЗИЦИЯ 2 \nСегодня в меню\n'
+    ret = '''Чтобы добавить в корзину напиште ПОЗИЦИЯ и номер блюда. 
+    Пример ПОЗИЦИЯ 2 
+    Сегодня в меню
+    '''
     for i in range(len(menu)):
-        ret = ret + str(i+1) + ") " + str(menu[i]) + '\n'
+        ret = ret + str((list(menu.keys()))[i]) + ") " + str((list(menu.values()))[i][0]) + ' ' + str((list(menu.values()))[i][1]) + 'P\n'
     send_msg(ret,id)
+    send_img('img/menu1.png',id,False)   #костыль
+    send_img('img/menu2.png',id,False)   #сделать перебор меню
+    send_img('img/menu3.png',id,False)   #НОРМАЛЬНЫЙ!!!!!!!!!
 
 
 def add_bask(id,val):
@@ -123,7 +137,7 @@ def gen_bask_img(bask,id):
             draw_text = ImageDraw.Draw(new_img)
             draw_text.text((pos[i][0] + 700, pos[i][1] +  140), ('x' + str(bask[i][1])),font = font,fill=('#1C0606'))
         
-        name = "newimgs/bask" + str(id) + str(randint(0,1000)) + ".png"
+        name = "newimgs/bask" + str(id) + str(randint(0,1000000)) + ".png"
         new_img.save(name, "PNG")
         name_imgs.append(name)
         it += 1
@@ -133,11 +147,19 @@ def gen_bask_img(bask,id):
 
 
 def check_bask(id):
+    '''
+    Отправляет картинку с содержимым корзины пользователю id
+    '''
     try:
         img = gen_bask_img(users[id],id)
         for i in range(len(img)):
             send_img(img[i],id)
-    except:
+        sum = 0
+        for i in range(len(users[id])):
+            sum += menu[users[id][i][0]][1] * users[id][i][1]
+        send_msg(('Итог: ' + str(sum) + 'Р'),id)
+    except Exception as e:
+        print(e)
         send_msg('Ваша корзина пуста.',id)
 
 
@@ -162,7 +184,8 @@ for event in longpoll.listen():
 
             elif msg == 'сделать заказ':
                 send_msg('Нипишите ЗАКАЗ и через запятую адрес, номер телефона для подтверждения заказа и связи курьера, ваше имя.',id)
-                send_msg('Пример: \nЗАКАЗ Ул.______, +79999999999, Иван.',id)
+                send_msg('''Пример: 
+                         ЗАКАЗ Ул.______, +79999999999, Иван.''',id)
                 send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
             elif msg == 'посмотреть корзину':
                 check_bask(id)
