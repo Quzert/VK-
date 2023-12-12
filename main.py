@@ -1,5 +1,6 @@
 import vk_api 
 from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api import VkUpload
 from PIL import Image,ImageDraw, ImageFont
 from math import *
@@ -38,11 +39,20 @@ except:
 
 
 # Функции
-def send_msg(text,id):
+def send_msg(text,id,kb = None):
     '''
     Отправка сообщений с текстом text пользователю id
     '''
-    vk_session.method("messages.send", {"user_id":id, "message":text, "random_id":0})
+    post = {"user_id":id, 
+            "message":text, 
+            "random_id":0
+            }
+    if kb != None:
+        post["keyboard"] =kb.get_keyboard() 
+    else:
+        post = post
+
+    vk_session.method("messages.send", post)
 
 
 def send_img(img,id,d = True):
@@ -173,11 +183,16 @@ for event in longpoll.listen():
 
             # Обработка сообщений
             if msg == 'привет':
-                send_msg('Привет пользователь, я тестовый бот для заказа доставки еды. Пожалуйста выбеде один из следующих пунктов.',id)
-                send_msg('Посмотреть меню.',id)
-                send_msg('Посмотреть корзину.',id)
-                send_msg('Сделать заказ.',id)
-            
+                keyboard = VkKeyboard(inline=True)
+                keyboard.add_button('Посмотреть меню')
+                keyboard.add_line()
+                keyboard.add_button('Посмотреть корзину')
+                keyboard.add_line()
+                keyboard.add_button('Сделать заказ')
+
+                send_msg('Привет пользователь, я тестовый бот для заказа доставки еды. Пожалуйста выбеде один из следующих пунктов.',id,keyboard)
+
+                
             elif msg == 'посмотреть меню':
                 get_menu(id)
 
