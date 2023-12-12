@@ -29,11 +29,12 @@ menu = {
         '010':['Какао',359]
     }
 
-# Создание необходимых директорий
+# Создание директорий
 try:
     os.mkdir('newimgs')
+    print('newimgs was created')
 except:
-    print('1')
+    print('Done')
 
 
 # Функции
@@ -60,13 +61,7 @@ def get_menu(id):
     '''
     Отправляет меню пользователю id
     '''
-    ret = '''Чтобы добавить в корзину напиште ПОЗИЦИЯ и номер блюда. 
-    Пример ПОЗИЦИЯ 2 
-    Сегодня в меню
-    '''
-    for i in range(len(menu)):
-        ret = ret + str((list(menu.keys()))[i]) + ") " + str((list(menu.values()))[i][0]) + ' ' + str((list(menu.values()))[i][1]) + 'P\n'
-    send_msg(ret,id)
+    send_msg('Сегодня в меню:',id)
     send_img('img/menu1.png',id,False)   #костыль
     send_img('img/menu2.png',id,False)   #сделать перебор меню
     send_img('img/menu3.png',id,False)   #НОРМАЛЬНЫЙ!!!!!!!!!
@@ -129,8 +124,12 @@ def gen_bask_img(bask,id):
 
         for i in range(count_it):
             imgs.append(Image.open(('img/dish' + str(bask[i + 4 * it][0]) + '.jpg')))
-            
-        new_img = Image.new('RGB', (800,800), (250,250,250))
+        if count_imgs == 1:
+            new_img = Image.new('RGB', (800,400), (250,250,250)) 
+        elif count_imgs < 4:
+            new_img = Image.new('RGB', (800,200 * count_imgs), (250,250,250)) 
+        else:
+            new_img = Image.new('RGB', (800,800), (250,250,250))
 
         for i in range(len(imgs)):
             new_img.paste(imgs[i],pos[i])
@@ -184,8 +183,7 @@ for event in longpoll.listen():
 
             elif msg == 'сделать заказ':
                 send_msg('Нипишите ЗАКАЗ и через запятую адрес, номер телефона для подтверждения заказа и связи курьера, ваше имя.',id)
-                send_msg('''Пример: 
-                         ЗАКАЗ Ул.______, +79999999999, Иван.''',id)
+                send_msg('Пример: \nЗАКАЗ Ул.______, +79999999999, Иван.',id)
                 send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
             elif msg == 'посмотреть корзину':
                 check_bask(id)
