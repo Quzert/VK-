@@ -2,7 +2,6 @@ import vk_api
 from image import *
 from defs import *
 from vk_api.longpoll import VkLongPoll, VkEventType
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 
 # Подключение бота
@@ -26,21 +25,24 @@ for event in longpoll.listen():
         if event.to_me:
 
             msg = event.text.lower()
+            orig_msg = event.text
             id = event.user_id
             print(msg,'by',id)
 
             # Обработка сообщений
-            if msg == 'привет':
-                keyboard = VkKeyboard(inline=True)
-                keyboard.add_button('Посмотреть меню')
+            if orig_msg in menu.keys():
+                add_bask(id, orig_msg)
+                print(users)
+            
+            elif msg == 'привет':
+                keyboard = VkKeyboard()
+                keyboard.add_button('Посмотреть меню' , color='positive')
                 keyboard.add_line()
-                keyboard.add_button('Посмотреть корзину')
+                keyboard.add_button('Посмотреть корзину', color='secondary')
                 keyboard.add_line()
-                keyboard.add_button('Сделать заказ')
-
+                keyboard.add_button('Сделать заказ', color='primary')
                 send_msg('Привет пользователь, я тестовый бот для заказа доставки еды. Пожалуйста выбеде один из следующих пунктов.',id,keyboard)
 
-                
             elif msg == 'посмотреть меню':
                 get_menu(id)
 
@@ -48,6 +50,7 @@ for event in longpoll.listen():
                 send_msg('Нипишите ЗАКАЗ и через запятую адрес, номер телефона для подтверждения заказа и связи курьера, ваше имя.',id)
                 send_msg('Пример: \nЗАКАЗ Ул.______, +79999999999, Иван.',id)
                 send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
+
             elif msg == 'посмотреть корзину':
                 check_bask(id)
                 
@@ -55,6 +58,3 @@ for event in longpoll.listen():
                 if msg.split()[0] == 'заказ':
                     order(msg,id)
                     print(orders)
-                elif msg.split()[0] == 'позиция':
-                    add_bask(id, msg)
-                    print(users)
