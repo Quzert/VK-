@@ -2,6 +2,8 @@ import vk_api
 from image import *
 from defs import *
 from vk_api.longpoll import VkLongPoll, VkEventType
+import threading
+
 
 
 # Подключение бота
@@ -21,40 +23,5 @@ except:
 
 # Обработка ивентов
 for event in longpoll.listen():
-    if event.type == VkEventType.MESSAGE_NEW:
-        if event.to_me:
-
-            msg = event.text.lower()
-            orig_msg = event.text
-            id = event.user_id
-            print(msg,'by',id)
-
-            # Обработка сообщений
-            if orig_msg in menu.keys():
-                add_bask(id, orig_msg)
-                print(users)
-            
-            elif msg == 'привет':
-                keyboard = VkKeyboard()
-                keyboard.add_button('Посмотреть меню' , color='positive')
-                keyboard.add_line()
-                keyboard.add_button('Посмотреть корзину', color='secondary')
-                keyboard.add_line()
-                keyboard.add_button('Сделать заказ', color='primary')
-                send_msg('Привет пользователь, я тестовый бот для заказа доставки еды. Пожалуйста выбеде один из следующих пунктов.',id,keyboard)
-
-            elif msg == 'посмотреть меню':
-                get_menu(id)
-
-            elif msg == 'сделать заказ':
-                send_msg('Нипишите ЗАКАЗ и через запятую адрес, номер телефона для подтверждения заказа и связи курьера, ваше имя.',id)
-                send_msg('Пример: \nЗАКАЗ Ул.______, +79999999999, Иван.',id)
-                send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
-
-            elif msg == 'посмотреть корзину':
-                check_bask(id)
-                
-            else:
-                if msg.split()[0] == 'заказ':
-                    order(msg,id)
-                    print(orders)
+    if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+        threading.Thread(target=proc, args=(event,), name= str(event.user_id)).start()
