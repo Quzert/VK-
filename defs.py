@@ -1,23 +1,25 @@
 import vk_api 
 from vk_api import VkUpload
+from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import os
+
 from image import *
 
 # Данные
 users = {} #ключ:значение
 orders = [] #id, имя, номер телефона, адрес, корзина
 menu = {
-        'Солянка':'001',
-        'Салат Сельдь под шубой':'002',
-        'Салат Цезарь с цыпленком':'003',
-        'Салат Оливье с курицей':'004',
-        'Крафт Бургер курица':'005',
-        'Шашлый из свинины':'006',
-        'Рубленый стейк':'007',
-        'Мохито':'008',
-        'Морс клюквенный':'009',
-        'Какао':'010'
+        'солянка':'001',
+        'салат сельдь под шубой':'002',
+        'салат цезарь с цыпленком':'003',
+        'салат оливье с курицей':'004',
+        'крафт бургер курица':'005',
+        'шашлый из свинины':'006',
+        'рубленый стейк':'007',
+        'мохито':'008',
+        'морс клюквенный':'009',
+        'какао':'010'
     }
 price = {
         '001': 229,
@@ -33,31 +35,37 @@ price = {
     }
 
 # Подключение бота
-vk_session = vk_api.VkApi(token="vk1.a.DuSUTm5V1Nwp9TAY6h5WRjxu4FIJCrAZaK3utrREhPRLFfNTg2Vqlgym3f-22yFdbjGxInNcUfHmLgebq_cSVhMR2Dd34ytVZCYIOOz-z8vFmUp0ZktDrfgAxW2nHTpdDd7gktWiKben-0_5tXfoJEFy1EleOqM_xQvOJL5C0K3hm-890volf05eK74mc85rwnaGM1Mv2cfUGsiuPua0Dg")
+vk_session = vk_api.VkApi(token="vk1.a.ASyNNLaODkng8BC1N4SK8tHnWmMlAOOtHcS94UyWrGFwE5XtoIIvd3kbz8ip0IBac-v6lwg01qiA8yrKhenyJbgA2GabF7fi5fTm5PdH-ixz1gm8_VGehHjWp5bTLv5zcpXWEj9Lx-tJGGuumhRO950-lGAC_DSK7phuIwMpV4RP0sVdB20hSSdrSA3_eIF7UatTHxwVn3LZMRKrozSyYw")
 session_api = vk_session.get_api()
 upload = VkUpload(vk_session)
+longpoll = VkLongPoll(vk_session)
+
+def find_key_by_value(dictionary, value):
+    for key, val in dictionary.items():
+        if val == value:
+            return key
+    return None
 
 def proc(event):
     msg = event.text.lower()
-    orig_msg = event.text
     id = event.user_id
     print(msg,'by',id)
 
      # Обработка сообщений
-    if orig_msg in menu.keys():
-        add_bask(id, orig_msg)
+    if msg in menu.keys():
+        add_bask(id, msg)
         print(users)
     
-    elif msg == 'привет':
+    elif msg == 'привет' or msg == 'начать':
         keyboard = VkKeyboard()
-        keyboard.add_button('Посмотреть меню' , color='positive')
+        keyboard.add_button('Меню' , color='positive')
         keyboard.add_line()
-        keyboard.add_button('Посмотреть корзину', color='secondary')
+        keyboard.add_button('Корзина', color='secondary')
         keyboard.add_line()
         keyboard.add_button('Сделать заказ', color='primary')
         send_msg('Привет пользователь, я тестовый бот для заказа доставки еды. Пожалуйста выбеде один из следующих пунктов.',id,keyboard)
 
-    elif msg == 'посмотреть меню':
+    elif msg == 'меню':
         get_menu(id)
 
     elif msg == 'сделать заказ':
@@ -65,13 +73,15 @@ def proc(event):
         send_msg('Пример: \nЗАКАЗ Ул.______, +79999999999, Иван.',id)
         send_msg('Коментарий к заказу можете сказать оператору при подтверждении заказа.',id)
 
-    elif msg == 'посмотреть корзину':
+    elif msg == 'корзина':
         check_bask(id)
         
     else:
         if msg.split()[0] == 'заказ':
             order(msg,id)
             print(orders)
+        elif msg.split()[0] == 'убрать':
+            del_pos(msg,id)
 
 
 def send_msg(text, id, kb = None):
@@ -123,8 +133,7 @@ def get_menu(id):
     keyboard.add_button('Морс клюквенный', color='primary')
     keyboard.add_button('Какао', color='primary') 
     keyboard.add_line()
-    keyboard.add_button('Посмотреть корзину', color='positive')
-
+    keyboard.add_button('Корзина', color='positive')
 
 
     send_msg('Сегодня в меню:',id,keyboard)
@@ -172,19 +181,68 @@ def check_bask(id):
     Отправляет картинку с содержимым корзины пользователю id
     '''
     if id in users.keys():
-        keyboard = VkKeyboard(inline=True)
-        keyboard.add_button('Посмотреть меню', color='positive')
-        keyboard.add_line()
-        keyboard.add_button('Сделать заказ', color='positive')
+        buttons = []
+        for i in range(len(users[id])):
+            buttons.append(find_key_by_value(menu,users[id][i][0]))
+        print('----')
+        print(buttons)
+
         img = gen_bask_img(users[id],id)
         for i in range(len(img)):
             send_img(img[i],id)
         sum = 0
         for i in range(len(users[id])):
             sum += price[users[id][i][0]] * users[id][i][1]
+
+        keyboard = VkKeyboard()
+        
+        l = 0
+        for i in buttons:
+            if l == 2:
+                keyboard.add_line()
+                l = 0
+            l += 1
+            keyboard.add_button(str('убрать ' + i),color='negative')
+        keyboard.add_line()
+        keyboard.add_button('Меню' , color='positive')
+        keyboard.add_button('Корзина' , color='positive')
+        keyboard.add_button('Сделать заказ', color='primary')
+
         send_msg(('Итог: ' + str(sum) + 'Р'), id, keyboard)
     else:
         keyboard = VkKeyboard(inline=True)
-        keyboard.add_button('Посмотреть меню', color='positive')
+        keyboard.add_button('меню', color='positive')
         send_msg('Ваша корзина пуста.', id, keyboard)
     
+def  del_pos(msg,id):
+    pos = msg.split(' ', 1)[1]
+    print(len(users[id]))
+    if len(users[id]) == 0:
+        keyboard = VkKeyboard(inline=True)
+        keyboard.add_button('меню', color='positive')
+        send_msg('Ваша корзина пуста.', id, keyboard)  
+        return 0   
+      
+    for i in range(len(users[id])):
+        if users[id][i][0] == menu[pos]:
+            users[id][i][1] -= 1
+            send_msg(f'Позиция "{pos.title()}" успешно удалена.',id)
+            if users[id][i][1] == 0:
+                users[id].pop(i)
+            break
+        elif i+1 == len(users[id]):
+            send_msg('Такой позиции нет.',id)  
+
+            
+    print(users[id])
+
+def gen_keyboard(buttons):
+    keyboard = VkKeyboard()
+    l = 0
+    for i in range(len(buttons)):
+        l += 1
+        if l == 2:
+            keyboard.add_line()
+            l = 0
+        keyboard.add_button(buttons[i],color='negative')
+    return(keyboard)
