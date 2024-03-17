@@ -109,9 +109,11 @@ def send_img(img,id,d = True):
     upload_img = upload.photo_messages(photos=img)[0]
     att.append('photo{}_{}'.format(upload_img['owner_id'],upload_img['id']))
     vk_session.method("messages.send", {"user_id":id, "random_id":0, 'attachment': ','.join(att)})
+    """
     if d:
         os.remove(img)
-
+    """
+    
 def get_menu(id):
     '''
     Отправляет меню пользователю id
@@ -134,6 +136,7 @@ def get_menu(id):
     keyboard.add_button('Какао', color='primary') 
     keyboard.add_line()
     keyboard.add_button('Корзина', color='positive')
+
 
 
     send_msg('Сегодня в меню:',id,keyboard)
@@ -170,6 +173,11 @@ def order(msg,id):
     '''
     Формирует заказ в списоке orders из сообщения пользователя msg и корзины пользователя id
     '''
+    if not(id in users) or (users[id] == []):
+        keyboard = VkKeyboard(inline=True)
+        keyboard.add_button('меню', color='positive')
+        send_msg('Не удалось оформить заказ. Ваша корзина пуста.', id, keyboard)
+        return 0
     data = (msg.replace('.', '').replace('заказ ', '')).split(',')
     orders.append([id,data[2],data[1],data[0],users[id]])
     send_msg('Заказ успешно сформирован.',id)
