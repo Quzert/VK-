@@ -79,7 +79,6 @@ def proc(event):
     else:
         if msg.split()[0] == 'заказ':
             order(msg,id)
-            print(orders)
         elif msg.split()[0] == 'убрать':
             del_pos(msg,id)
 
@@ -150,8 +149,7 @@ def add_bask(id,pos):
     Обработка добавление в корзину позиции val(значение словаря users) ,пользователя id(ключ словаря users). 
     Если пользователя не существует, то добавление пользователя и позиции заказа
     ''' 
-    if pos in menu.keys():
-        print(pos)    
+    if pos in menu.keys():   
         if id in users:
             for i in range(len(users[id])):
                 if users[id][i][0] == menu[pos]:
@@ -192,8 +190,6 @@ def check_bask(id):
         buttons = []
         for i in range(len(users[id])):
             buttons.append(find_key_by_value(menu,users[id][i][0]))
-        print('----')
-        print(buttons)
 
         img = gen_bask_img(users[id],id)
         for i in range(len(img)):
@@ -224,7 +220,6 @@ def check_bask(id):
     
 def  del_pos(msg,id):
     pos = msg.split(' ', 1)[1]
-    print(len(users[id]))
     if len(users[id]) == 0:
         keyboard = VkKeyboard(inline=True)
         keyboard.add_button('меню', color='positive')
@@ -240,8 +235,6 @@ def  del_pos(msg,id):
             break
         elif i+1 == len(users[id]):
             send_msg('Такой позиции нет.',id)  
-
-            
     print(users[id])
 
 def gen_keyboard(buttons):
