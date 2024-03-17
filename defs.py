@@ -75,7 +75,6 @@ def proc(event):
 
     elif msg == 'корзина':
         check_bask(id)
-        
     else:
         if msg.split()[0] == 'заказ':
             order(msg,id)
